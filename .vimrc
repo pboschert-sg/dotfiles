@@ -1,0 +1,12 @@
+set nocompatible
+set backspace=indent,eol,start
+set fileencodings=ucs-bom,utf-8,latin1
+set helplang=en
+set history=50
+set printoptions=paper:letter
+set ruler
+syntax on
+colorscheme vibrantink
+set expandtab
+set tabstop=4
+set shiftwidth=4
