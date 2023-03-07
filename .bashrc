@@ -12,8 +12,11 @@ HISTFILESIZE=20000
 HISTSIZE=20000
 HISTTIMEFORMAT="[%F %T] "
 HISTFILE="$HOME/.bash_history_other"
-PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
 
+# add ~/bin to the path
+PATH=$PATH:$HOME/bin
+
+PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
 # minimize and include condition constrained path information
 if [ $(type -P "long-pwd-prompt-command") ]; then
     PROMPT_COMMAND="source long-pwd-prompt-command; $PROMPT_COMMAND"
@@ -30,36 +33,13 @@ if [ -z "$debian_chroot" ] && [ -r /etc/debian_chroot ]; then
     debian_chroot=$(cat /etc/debian_chroot)
 fi
 
-# set a fancy prompt (non-color, unless we know we "want" color)
-case "$TERM" in
-    xterm-color) color_prompt=yes;;
+case "$(uname -s)" in
+    Linux*)  mach_type="nix";;
+    Darwin*) mach_type="mac";;
+    CYGWIN*) mach_type="win";;
+    MINGW*)  mach_type="win";;
+    *)       mach_type="nix";;  # assume *nix
 esac
-
-if [ -n "$force_color_prompt" ]; then
-    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-	# We have color support; assume it's compliant with Ecma-48
-	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
-	# a case would tend to support setf rather than setaf.)
-	color_prompt=yes
-    else
-	color_prompt=
-    fi
-fi
-
-unset color_prompt force_color_prompt
-
-# enable color support of ls and also add handy aliases
-if [ -x /usr/bin/dircolors ]; then
-    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
-    alias ls='ls -Fh --color=auto'
-    #alias dir='dir --color=auto'
-    #alias vdir='vdir --color=auto'
-
-    alias grep='grep --color=auto'
-    alias fgrep='fgrep --color=auto'
-    alias egrep='egrep --color=auto'
-fi
-
 
 # Create and use the vi alias only if we're in screen
 viAlias() {
@@ -70,6 +50,7 @@ if [[ "$TERM" == *"screen"* ]]; then
 fi
 
 # some more ls aliases
+alias ls='ls -F'
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
@@ -80,13 +61,29 @@ alias tailf='tail -f'
 alias df='df -h'
 alias du='du -h'
 
-# Add an "alert" alias for long running commands.  Use like so:
-#   sleep 10; alert
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+color_prompt=false
+if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+    # We have color support; assume it's compliant with ECMA-48 (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+    # a case would tend to support setf rather than setaf.)
+    color_prompt=true
+fi
 
-# enable programmable completion features (you don't need to enable
-# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
-# sources /etc/bash.bashrc).
+if $color_prompt; then
+    # set a colorful prompt
+    PS1="\[\033[01;32m\]\u\[\033[01;34m\]@\[\033[01;32m\]\h\[\033[01;34m\] \w $\[\033[00m\] "
+
+    if [ -x /usr/bin/dircolors ]; then
+        test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+
+        alias ls='ls --color=auto -F'
+        alias grep='grep --color=auto'
+        alias fgrep='fgrep --color=auto'
+        alias egrep='egrep --color=auto'
+    fi
+fi
+unset color_prompt
+
+# enable programmable completion features (you don't need to enable this, if it's already enabled in /etc/bash.bashrc and /etc/profile sources /etc/bash.bashrc).
 if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
@@ -94,16 +91,19 @@ fi
 
 # Source global definitions
 if [ -f /etc/bashrc ]; then
-	. /etc/bashrc
+    . /etc/bashrc
 fi
 
-# add ~/bin to the path
-PATH=$PATH:$HOME/bin
+if [[ "$mach_type" == "nix" ]]; then
+    # disable M$ telemetry collection
+    DOTNET_CLI_TELEMETRY_OPTOUT=1
 
-fortune
+    # Add dotnet tools if the directory exists
+    [ -d $HOME/.dotnet/tools ] && PATH=$PATH:$HOME/.dotnet/tools
+fi
 
-# dotnet
-DOTNET_CLI_TELEMETRY_OPTOUT=1
-# Add dotnet tools if the directory exists
+# run fortune if it exists
+if [ $(type -P "fortune") ]; then
+    fortune
+fi
 
-[ -d $HOME/.dotnet/tools ] && PATH=$PATH:$HOME/.dotnet/tools
