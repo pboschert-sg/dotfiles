@@ -87,7 +87,6 @@ unset color_prompt
 if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
-# .bashrc
 
 # Source global definitions
 if [ -f /etc/bashrc ]; then
@@ -105,5 +104,33 @@ fi
 # run fortune if it exists
 if [ $(type -P "fortune") ]; then
     fortune
+fi
+
+# SRWare Iron
+[ -d /usr/share/iron ] && PATH="$PATH:/usr/share/iron"
+
+if [ $(type -P "rbenv") ]; then
+    PATH="$PATH:$HOME/.rbenv/bin:$HOME/.rbenv/plugins/ruby-build/bin"
+    eval "$(rbenv init -)"
+fi
+
+# make gnuplot readline not suck
+if [ $(type -P "gnuplot") ]; then
+    alias gnuplot='rlwrap -a -c gnuplot'
+fi
+
+# OPAM configuration
+if [ -x $HOME/.opam/opam-init/init.sh ]; then
+. $HOME/.opam/opam-init/init.sh > /dev/null 2>&1 || true
+fi
+
+# Adding Scala SBT bin to path
+[ -d /opt/sbt/bin ] && PATH="/opt/sbt/bin:$PATH"
+
+# Golang
+if [ -d /usr/local/go/bin ]; then
+    GOPATH="$HOME/gopath"
+    PATH=$GOPATH:$GOPATH/bin:$PATH
+    PATH=$PATH:/usr/local/go/bin
 fi
 
